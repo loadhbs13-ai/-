@@ -1,98 +1,97 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <title>Linked List Tetris</title>
-    <style>
-        body { background: #222; color: white; display: flex; flex-direction: column; align-items: center; font-family: sans-serif; }
-        canvas { border: 4px solid #fff; background: #000; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
-        .info { margin-top: 10px; text-align: center; }
-    </style>
+    <meta charset="UTF-8">
+    <title>Linked List Tetris</title>
+    <style>
+        body { background: #222; color: white; display: flex; flex-direction: column; align-items: center; font-family: sans-serif; }
+        canvas { border: 4px solid #fff; background: #000; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        .info { margin-top: 10px; text-align: center; }
+    </style>
 </head>
 <body>
 
-    <h1>TETRIS</h1>
-    <canvas id="tetris" width="240" height="400"></canvas>
-    <div class="info">
-        <h2 id="score">Score: 0</h2>
-        <p>화살표 키: 이동/회전 | 아래 키: 빨리 내리기</p>
-    </div>
+    <h1>TETRIS</h1>
+    <canvas id="tetris" width="240" height="400"></canvas>
+    <div class="info">
+        <h2 id="score">Score: 0</h2>
+        <p>화살표 키: 이동/회전 | 아래 키: 빨리 내리기</p>
+    </div>
 
 <script>
 /**
- * 1. 연결 리스트 노드 정의 (테트리스의 한 줄)
- */
+ * 1. 연결 리스트 노드 정의 (테트리스의 한 줄)
+ */
 class RowNode {
-    constructor(width) {
-        this.data = new Array(width).fill(0); // [0,0,0...0] 한 줄의 블록 상태
-        this.next = null;
-        this.prev = null;
-    }
+    constructor(width) {
+        this.data = new Array(width).fill(0); //
+        this.next = null; //
+        this.prev = null; //
+    }
 }
 
 /**
- * 2. 연결 리스트 클래스 (게임판 관리)
- */
+ * 2. 연결 리스트 클래스 (게임판 관리)
+ */
 class BoardList {
-    constructor(width, height) {
-        this.width = width;
-        this.height = height;
-        this.head = null; // 맨 위 줄
-        this.tail = null; // 맨 아래 줄
-        this.init();
-    }
+    constructor(width, height) {
+        this.width = width;
+        this.height = height;
+        this.head = null;
+        this.tail = null;
+        this.init();
+    }
 
-    init() {
-        for (let i = 0; i < this.height; i++) {
-            this.addRowTop();
-        }
-    }
+    init() {
+        this.head = null;
+        this.tail = null;
+        for (let i = 0; i < this.height; i++) {
+            this.addRowTop(); //
+        }
+    }
 
-    addRowTop() {
-        const newNode = new RowNode(this.width);
-        if (!this.head) {
-            this.head = this.tail = newNode;
-        } else {
-            newNode.next = this.head;
-            this.head.prev = newNode;
-            this.head = newNode;
-        }
-    }
+    addRowTop() {
+        const newNode = new RowNode(this.width);
+        if (!this.head) {
+            this.head = this.tail = newNode;
+        } else {
+            newNode.next = this.head;
+            this.head.prev = newNode;
+            this.head = newNode;
+        }
+    }
 
-    // 특정 y 좌표의 줄 데이터 가져오기
-    getRow(y) {
-        let curr = this.head;
-        for (let i = 0; i < y; i++) {
-            if (curr) curr = curr.next;
-        }
-        return curr;
-    }
+    getRow(y) {
+        let curr = this.head;
+        for (let i = 0; i < y; i++) {
+            if (curr) curr = curr.next;
+        }
+        return curr;
+    }
 
-    // 꽉 찬 줄 삭제 및 새 줄 추가 (연결 리스트의 장점)
-    clearLines() {
-        let curr = this.tail;
-        let linesCleared = 0;
+    clearLines() {
+        let curr = this.tail;
+        let linesCleared = 0;
 
-        while (curr) {
-            const isFull = curr.data.every(value => value !== 0);
-            if (isFull) {
-                linesCleared++;
-                const toDelete = curr;
-                curr = curr.prev; // 위로 이동
+        while (curr) {
+            const isFull = curr.data.every(value => value !== 0); //
+            if (isFull) {
+                linesCleared++;
+                const toDelete = curr;
+                curr = curr.prev;
 
-                // 노드 삭제 연결 로직
-                if (toDelete.prev) toDelete.prev.next = toDelete.next;
-                if (toDelete.next) toDelete.next.prev = toDelete.prev;
-                if (toDelete === this.tail) this.tail = toDelete.prev;
-                if (toDelete === this.head) this.head = toDelete.next;
+                if (toDelete.prev) toDelete.prev.next = toDelete.next;
+                if (toDelete.next) toDelete.next.prev = toDelete.prev;
+                if (toDelete === this.tail) this.tail = toDelete.prev;
+                if (toDelete === this.head) this.head = toDelete.next;
 
-                this.addRowTop(); // 삭제한 만큼 위에 추가
-            } else {
-                curr = curr.prev;
-            }
-        }
-        return linesCleared;
-    }
+                this.addRowTop(); //
+            } else {
+                curr = curr.prev;
+            }
+        }
+        return linesCleared;
+    }
 }
 
 // --- 게임 설정 ---
@@ -102,111 +101,105 @@ context.scale(20, 20);
 
 const board = new BoardList(12, 20);
 let score = 0;
-
-// 블록 모양 (T, L, J, O, Z, S, I)
 const pieces = 'ILJOTSZ';
 const colors = [null, '#FF0D72', '#0DC2FF', '#0DFF72', '#F538FF', '#FF8E0D', '#FFE138', '#3877FF'];
 
 function createPiece(type) {
-    if (type === 'I') return [[0, 1, 0, 0], [0, 1, 0, 0], [0, 1, 0, 0], [0, 1, 0, 0]];
-    if (type === 'L') return [[0, 2, 0], [0, 2, 0], [0, 2, 2]];
-    if (type === 'J') return [[0, 3, 0], [0, 3, 0], [3, 3, 0]];
-    if (type === 'O') return [[4, 4], [4, 4]];
-    if (type === 'T') return [[0, 5, 0], [5, 5, 5], [0, 0, 0]];
-    if (type === 'S') return [[0, 6, 6], [6, 6, 0], [0, 0, 0]];
-    if (type === 'Z') return [[7, 7, 0], [0, 7, 7], [0, 0, 0]];
+    if (type === 'I') return [[0, 1, 0, 0], [0, 1, 0, 0], [0, 1, 0, 0], [0, 1, 0, 0]];
+    if (type === 'L') return [[0, 2, 0], [0, 2, 0], [0, 2, 2]];
+    if (type === 'J') return [[0, 3, 0], [0, 3, 0], [3, 3, 0]];
+    if (type === 'O') return [[4, 4], [4, 4]];
+    if (type === 'T') return [[0, 5, 0], [5, 5, 5], [0, 0, 0]];
+    if (type === 'S') return [[0, 6, 6], [6, 6, 0], [0, 0, 0]];
+    if (type === 'Z') return [[7, 7, 0], [0, 7, 7], [0, 0, 0]];
 }
 
-// 충돌 감지
 function collide(board, player) {
-    const [m, o] = [player.matrix, player.pos];
-    for (let y = 0; y < m.length; ++y) {
-        for (let x = 0; x < m[y].length; ++x) {
-            if (m[y][x] !== 0) {
-                const row = board.getRow(y + o.y);
-                if (!row || row.data[x + o.x] !== 0) return true;
-            }
-        }
-    }
-    return false;
+    const [m, o] = [player.matrix, player.pos];
+    for (let y = 0; y < m.length; ++y) {
+        for (let x = 0; x < m[y].length; ++x) {
+            if (m[y][x] !== 0) {
+                const row = board.getRow(y + o.y);
+                if (!row || row.data[x + o.x] !== 0) return true;
+            }
+        }
+    }
+    return false;
 }
 
-// 보드에 블록 고정
 function merge(board, player) {
-    player.matrix.forEach((row, y) => {
-        row.forEach((value, x) => {
-            if (value !== 0) {
-                const targetRow = board.getRow(y + player.pos.y);
-                targetRow.data[x + player.pos.x] = value;
-            }
-        });
-    });
+    player.matrix.forEach((row, y) => {
+        row.forEach((value, x) => {
+            if (value !== 0) {
+                const targetRow = board.getRow(y + player.pos.y);
+                targetRow.data[x + player.pos.x] = value;
+            }
+        });
+    });
 }
 
 function playerReset() {
-    player.matrix = createPiece(pieces[pieces.length * Math.random() | 0]);
-    player.pos.y = 0;
-    player.pos.x = (board.width / 2 | 0) - (player.matrix[0].length / 2 | 0);
-    if (collide(board, player)) { // 게임 오버
-        board.init();
-        score = 0;
-        updateScore();
-    }
+    player.matrix = createPiece(pieces[pieces.length * Math.random() | 0]);
+    player.pos.y = 0;
+    player.pos.x = (board.width / 2 | 0) - (player.matrix[0].length / 2 | 0);
+    if (collide(board, player)) {
+        board.init();
+        score = 0;
+        updateScore();
+    }
 }
 
 function playerDrop() {
-    player.pos.y++;
-    if (collide(board, player)) {
-        player.pos.y--;
-        merge(board, player);
-        const cleared = board.clearLines();
-        score += cleared * 100;
-        updateScore();
-        playerReset();
-    }
-    dropCounter = 0;
+    player.pos.y++;
+    if (collide(board, player)) {
+        player.pos.y--;
+        merge(board, player);
+        const cleared = board.clearLines();
+        score += cleared * 100;
+        updateScore();
+        playerReset();
+    }
+    dropCounter = 0;
 }
 
 function rotate(matrix) {
-    for (let y = 0; y < matrix.length; ++y) {
-        for (let x = 0; x < y; ++x) {
-            [matrix[x][y], matrix[y][x]] = [matrix[y][x], matrix[x][y]];
-        }
-    }
-    matrix.forEach(row => row.reverse());
+    for (let y = 0; y < matrix.length; ++y) {
+        for (let x = 0; x < y; ++x) {
+            [matrix[x][y], matrix[y][x]] = [matrix[y][x], matrix[x][y]];
+        }
+    }
+    matrix.forEach(row => row.reverse());
 }
 
 function draw() {
-    context.fillStyle = '#000';
-    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.fillStyle = '#000';
+    context.fillRect(0, 0, canvas.width, canvas.height);
 
-    // 보드 그리기
-    let curr = board.head;
-    let y = 0;
-    while(curr) {
-        curr.data.forEach((value, x) => {
-            if (value !== 0) {
-                context.fillStyle = colors[value];
-                context.fillRect(x, y, 1, 1);
-            }
-        });
-        curr = curr.next;
-        y++;
-    }
+    let curr = board.head;
+    let y = 0;
+    while(curr) {
+        curr.data.forEach((value, x) => {
+            if (value !== 0) {
+                context.fillStyle = colors[value];
+                context.fillRect(x, y, 1, 1);
+            }
+        });
+        curr = curr.next;
+        y++;
+    }
 
-    // 플레이어 그리기
-    player.matrix.forEach((row, y) => {
-        row.forEach((value, x) => {
-            if (value !== 0) {
-                context.fillStyle = colors[value];
-                context.fillRect(x + player.pos.x, y + player.pos.y, 1, 1);
-            }
-        });
-    });
+    player.matrix.forEach((row, y) => {
+        row.forEach((value, x) => {
+            if (value !== 0) {
+                context.fillStyle = colors[value];
+                context.fillRect(x + player.pos.x, y + player.pos.y, 1, 1);
+            }
+        });
+    });
 }
 
 function updateScore() {
-    document.getElementById('score').innerText = `Score: ${score}`;
+    document.getElementById('score').innerText = `Score: ${score}`;
 }
 
 let dropCounter = 0;
@@ -214,39 +207,39 @@ let dropInterval = 1000;
 let lastTime = 0;
 
 function update(time = 0) {
-    const deltaTime = time - lastTime;
-    lastTime = time;
-    dropCounter += deltaTime;
-    if (dropCounter > dropInterval) playerDrop();
-    draw();
-    requestAnimationFrame(update);
+    const deltaTime = time - lastTime;
+    lastTime = time;
+    dropCounter += deltaTime;
+    if (dropCounter > dropInterval) playerDrop();
+    draw();
+    requestAnimationFrame(update);
 }
 
 const player = { pos: {x: 0, y: 0}, matrix: null };
 
 document.addEventListener('keydown', event => {
-    if (event.keyCode === 37) { // Left
-        player.pos.x--;
-        if (collide(board, player)) player.pos.x++;
-    } else if (event.keyCode === 39) { // Right
-        player.pos.x++;
-        if (collide(board, player)) player.pos.x--;
-    } else if (event.keyCode === 40) { // Down
-        playerDrop();
-    } else if (event.keyCode === 38) { // Up (Rotate)
-        const pos = player.pos.x;
-        let offset = 1;
-        rotate(player.matrix);
-        while (collide(board, player)) {
-            player.pos.x += offset;
-            offset = -(offset + (offset > 0 ? 1 : -1));
-            if (offset > player.matrix[0].length) {
-                rotate(player.matrix); // 되돌리기
-                player.pos.x = pos;
-                return;
-            }
-        }
-    }
+    if (event.keyCode === 37) {
+        player.pos.x--;
+        if (collide(board, player)) player.pos.x++;
+    } else if (event.keyCode === 39) {
+        player.pos.x++;
+        if (collide(board, player)) player.pos.x--;
+    } else if (event.keyCode === 40) {
+        playerDrop();
+    } else if (event.keyCode === 38) {
+        const pos = player.pos.x;
+        let offset = 1;
+        rotate(player.matrix);
+        while (collide(board, player)) {
+            player.pos.x += offset;
+            offset = -(offset + (offset > 0 ? 1 : -1));
+            if (offset > player.matrix[0].length) {
+                rotate(player.matrix);
+                player.pos.x = pos;
+                return;
+            }
+        }
+    }
 });
 
 playerReset();
@@ -254,4 +247,4 @@ updateScore();
 update();
 </script>
 </body>
-</html> 기터브 링크로 만들어줘
+</html>
