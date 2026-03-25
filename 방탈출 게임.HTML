@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>스택 카페: 지옥의 마감 시간</title>
+    <style>
+        body {
+            background-color: #f4eade; /* 라떼 색상 */
+            color: #3e2723; /* 다크 로스트 커피 색상 */
+            font-family: 'Georgia', serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+        #game-container {
+            width: 850px;
+            height: 600px;
+            border: 4px solid #5d4037;
+            border-radius: 10px;
+            display: flex;
+            box-shadow: 0 10px 30px rgba(62, 39, 35, 0.4);
+            background-color: #fff8f0;
+        }
+        #main-area {
+            flex: 2;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            border-right: 3px dashed #8d6e63;
+            position: relative;
+        }
+        #stack-area {
+            flex: 1;
+            padding: 20px;
+            background-color: #efebe9;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border-top-right-radius: 6px;
+            border-bottom-right-radius: 6px;
+        }
+        .page {
+            display: none;
+            height: 100%;
+        }
+        .active {
+            display: block;
+        }
+        h1, h2 {
+            margin-top: 0;
+            color: #4e342e;
+            border-bottom: 2px solid #d7ccc8;
+            padding-bottom: 10px;
+        }
+        .desc {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        button {
+            background-color: #795548;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 15px;
+            margin: 5px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+        }
+        button:hover {
+            background-color: #5d4037;
+        }
+        #stack-container {
+            width: 80%;
+            height: 400px;
+            border: 3px solid #8d6e63;
+            border-top: none;
+            display: flex;
+            flex-direction: column-reverse; /* 영수증이 아래서부터 위로 쌓임 */
+            padding: 10px;
+            gap: 5px;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 40px,
+                rgba(141, 110, 99, 0.1) 40px,
+                rgba(141, 110, 99, 0.1) 41px
+            );
+            border-bottom-left-radius: 10px;
+            border-bottom-right-radius: 10px;
+        }
+        .stack-item {
+            background-color: #fff;
+            color: #3e2723;
+            text-align: center;
+            padding: 10px;
+            font-weight: bold;
+            border: 1px solid #d7ccc8;
+            border-left: 4px solid #ffb300;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            animation: slideDown 0.3s ease-out;
+        }
+        @keyframes slideDown {
+            0% { opacity: 0; transform: translateY(-20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        #message-box {
+            position: absolute;
+            bottom: 20px;
+            left: 30px;
+            right: 30px;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #d32f2f;
+            color: #c62828;
+            background-color: #ffcdd2;
+            display: none;
+            font-weight: bold;
+            text-align: center;
+        }
+        .controls {
+            margin-top: auto;
+            padding-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <div id="main-area">
+        <div id="page-1" class="page active">
+            <h2>Page 1: 닫혀버린 카페 문</h2>
+            <div class="desc">
+                비가 쏟아지는 자정, 마감을 하려는데 카페 자동문이 잠겨버렸다.<br>
+                포스기에 <strong>[LIFO 영수증 꽂이 시스템 활성화]</strong>라는 기괴한 문구가 떴다.<br><br>
+                나중에 꽂은 영수증부터 처리해야만 문이 열린다. 일단 빈 스택에 <b>'마스터 키'</b>를 꽂고 처리(Pop)해보자.
+            </div>
+            <div class="controls">
+                <button onclick="push('마스터 키')">Push '마스터 키'</button>
+                <button onclick="checkPage1()">처리하기 (Pop & Check)</button>
+            </div>
+        </div>
+
+        <div id="page-2" class="page">
+            <h2>Page 2: 설거지 지옥</h2>
+            <div class="desc">
+                스택에 누군가 '다 마신 컵'들을 가득 쌓아두었다.<br><br>
+                다음 작업을 진행하려면 싱크대(스택)를 완전히 비워야(Empty) 한다. 가장 위에 있는 컵부터 차례대로 치워보자.
+            </div>
+            <div class="controls">
+                <button onclick="pop()">설거지 (Pop)</button>
+                <button onclick="checkPage2()">다음 구역으로</button>
+            </div>
+        </div>
+
+        <div id="page-3" class="page">
+            <h2>Page 3: 진상 손님의 컴플레인</h2>
+            <div class="desc">
+                유리창 밖에서 단골손님이 당장 <b>'아메리카노'</b>를 내놓으라고 소리친다.<br><br>
+                하지만 주문서(스택)에는 라떼와 아메리카노가 섞여 들어갈 수 있다. LIFO 구조를 생각해, 서빙할 때 반드시 '아메리카노'가 스택의 맨 위(Top)에 오도록 만들어라.
+            </div>
+            <div class="controls">
+                <button onclick="push('카페라떼')">Push '라떼'</button>
+                <button onclick="push('아메리카노')">Push '아메리카노'</button>
+                <button onclick="pop()">주문 취소 (Pop)</button>
+                <button onclick="checkPage3()">음료 서빙 (Pop)</button>
+            </div>
+        </div>
+
+        <div id="page-4" class="page">
+            <h2>Page 4: 위태로운 디저트 쟁반</h2>
+            <div class="desc">
+                이 카페의 쟁반(스택)은 너무 작아서 최대 <b>3개</b>의 아이템만 쌓을 수 있다.<br><br>
+                배달 기사님에게 전달하려면 스택에 <b>'마카롱'</b> 3개를 꽉 채운 상태에서 포장 버튼을 눌러야 한다. 4개를 올리면 쟁반이 엎어지니 주의하라!
+            </div>
+            <div class="controls">
+                <button onclick="push('마카롱')">Push '마카롱'</button>
+                <button onclick="pop()">빼기 (Pop)</button>
+                <button onclick="checkPage4()">포장 완료</button>
+            </div>
+        </div>
+
+        <div id="page-5" class="page">
+            <h2>Page 5: 고장 난 시럽 펌프</h2>
+            <div class="desc">
+                시크릿 메뉴의 시럽 황금 비율은 <b>7번</b>이다. 하지만 포스기가 고장 나 후위 표기법(Postfix)으로만 계산된다.<br><br>
+                숫자 2개와 '+' 버튼을 스택에 넣고 '혼합'을 누르면 상단의 두 숫자를 더해 다시 스택에 넣는다.<br>
+                스택의 Top에 시럽 '7' 펌프를 완성하라.
+            </div>
+            <div class="controls">
+                <button onclick="push(3)">Push 3</button>
+                <button onclick="push(4)">Push 4</button>
+                <button onclick="push('+')">Push '+'</button>
+                <button onclick="calculatePostfix()">혼합하기 (Eval)</button>
+                <button onclick="checkPage5()">제출하기</button>
+            </div>
+        </div>
+
+        <div id="page-6" class="page">
+            <h2>Page 6: 바리스타의 원두 배합</h2>
+            <div class="desc">
+                스페셜티 원두의 완벽한 추출 그램(g) 수는 <b>14g</b>이다.<br>
+                주어진 숫자와 연산자로 14를 만들어라.<br>
+                (힌트: 2, 5, 4, +, * 의 순서를 스택에 맞게 고민할 것. 5와 2를 곱하고 4를 더하려면 어떤 순서로 넣어야 할까?)
+            </div>
+            <div class="controls">
+                <button onclick="push(2)">Push 2</button>
+                <button onclick="push(5)">Push 5</button>
+                <button onclick="push(4)">Push 4</button>
+                <button onclick="push('+')">Push '+'</button>
+                <button onclick="push('*')">Push '*'</button>
+                <button onclick="pop()">버리기 (Pop)</button>
+                <button onclick="calculatePostfix()">혼합하기</button>
+                <button onclick="checkPage6()">추출 시작</button>
+            </div>
+        </div>
+
+        <div id="page-7" class="page">
+            <h2>Page 7: 꼬여버린 주문서</h2>
+            <div class="desc">
+                진상 손님이 음료를 <b>C, O, F</b> 순서로 마시겠다며 순서대로 내오라고 한다.<br><br>
+                하지만 스택은 넣은 순서의 반대로 나간다. 스택에 알파벳을 채운 뒤 '순차 서빙'을 누르면 스택의 음료가 모두 연속으로 Pop 된다. C, O, F 순서로 나오게 스택을 구성하라.
+            </div>
+            <div class="controls">
+                <button onclick="push('C')">Push 'C'</button>
+                <button onclick="push('O')">Push 'O'</button>
+                <button onclick="push('F')">Push 'F'</button>
+                <button onclick="pop()">빼기 (Pop)</button>
+                <button onclick="checkPage7()">순차 서빙 (Auto Pop)</button>
+            </div>
+        </div>
+
+        <div id="page-8" class="page">
+            <h2>Page 8: 샌드위치 패킹</h2>
+            <div class="desc">
+                샌드위치 포장 박스의 규격을 맞춰야 한다. 모양은 정확히 <b>[ ( ) ]</b> 여야 한다.<br><br>
+                스택에 괄호 모양의 빵과 속재료를 넣고 '검증'을 누르면 꺼내면서(Pop) 형태를 확인한다. (스택에서 역순으로 나옴을 절대 잊지 마라!)
+            </div>
+            <div class="controls">
+                <button onclick="push('[')">Push 식빵 '['</button>
+                <button onclick="push(']')">Push 식빵 ']'</button>
+                <button onclick="push('(')">Push 속재료 '('</button>
+                <button onclick="push(')')">Push 속재료 ')'</button>
+                <button onclick="pop()">빼기 (Pop)</button>
+                <button onclick="checkPage8()">포장 검증</button>
+            </div>
+        </div>
+
+        <div id="page-9" class="page">
+            <h2>Page 9: 최후의 정산</h2>
+            <div class="desc">
+                퇴근 직전, 포스기 현금 시재가 1원 빵꾸가 났다!<br>
+                스택을 비운 후, 남은 버튼들로 스택의 Top에 오차 금액 <b>-1</b>을 만들어야 시스템이 종료된다.<br>
+                (참고: 뺄셈(-) 시 먼저 스택에서 꺼낸 숫자가 뒤로 간다. 2, 3, - 순서일 때 연산 결과를 생각해보자.)
+            </div>
+            <div class="controls">
+                <button onclick="push(2)">Push 2</button>
+                <button onclick="push(3)">Push 3</button>
+                <button onclick="push('-')">Push '-'</button>
+                <button onclick="pop()">취소 (Pop)</button>
+                <button onclick="calculatePostfix()">정산하기</button>
+                <button onclick="checkPage9()">마감 종료</button>
+            </div>
+        </div>
+
+        <div id="page-10" class="page">
+            <h2>Page 10: 달콤한 퇴근</h2>
+            <div class="desc" style="color:#d32f2f; font-size: 1.5rem;">
+                "철컥-"<br><br>
+                카페의 문이 마침내 열렸습니다.<br>
+                당신은 끔찍한 LIFO 지옥의 카페에서 스택 구조를 통달하고 무사히 퇴근했습니다. 수고하셨습니다!
+            </div>
+            <div class="controls">
+                <button onclick="location.reload()">내일 다시 출근하기 (다시 시작)</button>
+            </div>
+        </div>
+
+        <div id="message-box"></div>
+    </div>
+
+    <div id="stack-area">
+        <h3>영수증 꽂이 (Stack)</h3>
+        <div id="stack-container">
+            </div>
+        <div style="margin-top: 10px; color: #8d6e63; font-weight: bold;">최상단 (Top) &uarr;</div>
+    </div>
+</div>
+
+<script>
+    let stack = [];
+    const maxStackSize = 8;
+    let currentPage = 1;
+
+    function renderStack() {
+        const container = document.getElementById('stack-container');
+        container.innerHTML = '';
+        for(let i=0; i<stack.length; i++) {
+            const div = document.createElement('div');
+            div.className = 'stack-item';
+            div.innerText = stack[i];
+            container.appendChild(div);
+        }
+    }
+
+    function push(item) {
+        if (currentPage === 4 && stack.length >= 3) {
+            showMessage("와장창! 쟁반에 너무 많이 올려서 마카롱이 다 쏟아졌습니다! (최대 3개)");
+            stack = [];
+            renderStack();
+            return;
+        }
+        if (stack.length >= maxStackSize) {
+            showMessage("영수증 꽂이가 가득 찼습니다!");
+            return;
+        }
+        stack.push(item);
+        hideMessage();
+        renderStack();
+    }
+
+    function pop() {
+        if (stack.length === 0) {
+            showMessage("스택이 비어있습니다!");
+            return null;
+        }
+        hideMessage();
+        const item = stack.pop();
+        renderStack();
+        return item;
+    }
+
+    function showMessage(msg) {
+        const box = document.getElementById('message-box');
+        box.innerText = msg;
+        box.style.display = 'block';
+        setTimeout(() => { box.style.display = 'none'; }, 3000);
+    }
+
+    function hideMessage() {
+        document.getElementById('message-box').style.display = 'none';
+    }
+
+    function nextPage() {
+        document.getElementById(`page-${currentPage}`).classList.remove('active');
+        currentPage++;
+        document.getElementById(`page-${currentPage}`).classList.add('active');
+        
+        if(currentPage === 2) {
+            stack = ['다 마신 컵', '다 마신 컵', '다 마신 컵'];
+            renderStack();
+        } else {
+            stack = [];
+            renderStack();
+        }
+    }
+
+    function calculatePostfix() {
+        if(stack.length < 3) {
+            showMessage("재료가 부족합니다. (숫자 2개, 연산자 1개 필요)");
+            return;
+        }
+        const operator = pop();
+        const num2 = pop(); 
+        const num1 = pop(); 
+
+        if(typeof num1 !== 'number' || typeof num2 !== 'number' || !['+', '*', '-'].includes(operator)) {
+            showMessage("포스기 오류! 잘못된 수식입니다. 스택이 초기화됩니다.");
+            stack = []; 
+            renderStack();
+            return;
+        }
+
+        let result;
+        if(operator === '+') result = num1 + num2;
+        if(operator === '*') result = num1 * num2;
+        if(operator === '-') result = num1 - num2; 
+        
+        push(result);
+    }
+
+    function checkPage1() {
+        const item = pop();
+        if (item === '마스터 키') nextPage();
+        else showMessage("권한이 없는 키입니다.");
+    }
+
+    function checkPage2() {
+        if (stack.length === 0) nextPage();
+        else showMessage("아직 설거지할 컵이 남아있습니다.");
+    }
+
+    function checkPage3() {
+        const item = pop();
+        if (item === '아메리카노') nextPage();
+        else {
+            showMessage("손님이 잘못된 음료를 받고 화를 냅니다. 다시 만드세요.");
+            stack = [];
+            renderStack();
+        }
+    }
+
+    function checkPage4() {
+        if (stack.length === 3 && stack.every(i => i === '마카롱')) nextPage();
+        else showMessage("마카롱이 정확히 3개 포장되지 않았습니다.");
+    }
+
+    function checkPage5() {
+        if (stack.length === 1 && stack[0] === 7) nextPage();
+        else showMessage("시럽 펌프 횟수(Top)가 7이 아닙니다.");
+    }
+
+    function checkPage6() {
+        if (stack.length === 1 && stack[0] === 14) nextPage();
+        else showMessage("원두 그램 수(Top)가 14g이 아닙니다. 후위 표기법 순서를 다시 생각하세요.");
+    }
+
+    function checkPage7() {
+        let result = "";
+        while(stack.length > 0) result += pop();
+        if (result === "COF") nextPage();
+        else showMessage(`서빙된 순서는 '${result}' 입니다. 손님이 원하는 순서는 'COF'입니다.`);
+    }
+
+    function checkPage8() {
+        let result = "";
+        let originalLen = stack.length;
+        for(let i=0; i<originalLen; i++) result += pop();
+        if (result === "[()]") nextPage();
+        else showMessage(`포장된 모양: ${result}. 올바른 형태인 [()] 가 아닙니다. 역순으로 나오는 것을 명심하세요.`);
+    }
+
+    function checkPage9() {
+        if (stack.length === 1 && stack[0] === -1) nextPage();
+        else showMessage("정산 오차가 -1원이 아닙니다.");
+    }
+</script>
+</body>
+</html>
